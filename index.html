@@ -3,598 +3,299 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Waymo Strategy Analysis — Hoang Nguyen (David)</title>
+<title>Waymo Strategy Analysis &mdash; Hoang Nguyen (David)</title>
+<meta name="description" content="Six simulations on what actually makes an AI product win in the real world: data, world models, reward design, moats, and launch strategy.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
-
-  :root {
-    --green: #00BFA5;
-    --green-light: #e0f7f4;
-    --charcoal: #1e2a2a;
-    --body: #2d3a3a;
-    --muted: #607070;
-    --bg: #ffffff;
-    --surface: #f7fafa;
-    --border: #dde8e8;
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 400;
-    color: var(--body);
-    background: var(--bg);
-    line-height: 1.75;
-    font-size: 16px;
-  }
-
-  /* NAV */
-  nav {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--border);
-    padding: 0 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-  }
-  .nav-brand {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1rem;
-    color: var(--charcoal);
-    letter-spacing: 0.01em;
-  }
-  .nav-brand span { color: var(--green); }
-  .nav-links {
-    display: flex;
-    gap: 1.5rem;
-    list-style: none;
-  }
-  .nav-links a {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--muted);
-    text-decoration: none;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    transition: color 0.2s;
-  }
-  .nav-links a:hover { color: var(--green); }
-
-  /* HERO */
-  .hero {
-    background: var(--charcoal);
-    color: white;
-    padding: 5rem 2rem 4rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: -60px; right: -60px;
-    width: 400px; height: 400px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(0,191,165,0.15) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .hero::after {
-    content: '';
-    position: absolute;
-    bottom: -80px; left: 10%;
-    width: 300px; height: 300px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(0,191,165,0.08) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .hero-inner {
-    max-width: 820px;
-    margin: 0 auto;
-    position: relative;
-  }
-  .hero-tag {
-    display: inline-block;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--green);
-    border: 1px solid rgba(0,191,165,0.4);
-    padding: 0.3rem 0.8rem;
-    border-radius: 2px;
-    margin-bottom: 1.5rem;
-  }
-  .hero h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(2rem, 5vw, 3.2rem);
-    line-height: 1.15;
-    color: #ffffff;
-    margin-bottom: 1rem;
-    max-width: 700px;
-  }
-  .hero h1 em {
-    font-style: italic;
-    color: var(--green);
-  }
-  .hero-sub {
-    font-size: 1rem;
-    color: rgba(255,255,255,0.65);
-    max-width: 580px;
-    line-height: 1.7;
-    margin-bottom: 2rem;
-  }
-  .hero-meta {
-    display: flex;
-    gap: 2rem;
-    flex-wrap: wrap;
-  }
-  .hero-meta-item {
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.45);
-    letter-spacing: 0.03em;
-  }
-  .hero-meta-item strong {
-    display: block;
-    color: rgba(255,255,255,0.85);
-    font-weight: 500;
-    font-size: 0.85rem;
-  }
-
-  /* SITUATION */
-  .situation {
-    background: var(--green-light);
-    border-left: 4px solid var(--green);
-    padding: 2rem 2.5rem;
-    max-width: 820px;
-    margin: 3rem auto;
-    border-radius: 0 6px 6px 0;
-  }
-  .situation-label {
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--green);
-    margin-bottom: 0.75rem;
-  }
-  .situation p {
-    color: var(--charcoal);
-    font-size: 1rem;
-    line-height: 1.75;
-  }
-
-  /* MAIN CONTENT */
-  .content {
-    max-width: 820px;
-    margin: 0 auto;
-    padding: 0 2rem 4rem;
-  }
-
-  /* STEP */
-  .step {
-    margin-bottom: 4rem;
-    padding-bottom: 4rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .step:last-child { border-bottom: none; }
-
-  .step-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 1.25rem;
-    margin-bottom: 1.5rem;
-  }
-  .step-number {
-    flex-shrink: 0;
-    width: 42px; height: 42px;
-    background: var(--charcoal);
-    color: var(--green);
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    margin-top: 4px;
-  }
-  .step-title-block {}
-  .step-eyebrow {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--green);
-    margin-bottom: 0.2rem;
-  }
-  .step-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.5rem;
-    color: var(--charcoal);
-    line-height: 1.2;
-  }
-
-  .step p {
-    color: var(--body);
-    margin-bottom: 1rem;
-    font-size: 0.97rem;
-  }
-
-  /* ARTIFACT */
-  .artifact {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--green);
-    border-radius: 4px;
-    padding: 1.75rem 2rem;
-    margin: 1.75rem 0 0.75rem;
-  }
-  .artifact-label {
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--green);
-    margin-bottom: 1rem;
-  }
-  .artifact p {
-    font-size: 0.93rem;
-    color: var(--charcoal);
-    margin-bottom: 0.85rem;
-    line-height: 1.75;
-  }
-  .artifact p:last-child { margin-bottom: 0; }
-  .artifact strong {
-    font-weight: 600;
-    color: var(--charcoal);
-  }
-  .artifact-credit {
-    font-size: 0.75rem;
-    color: var(--muted);
-    font-style: italic;
-    margin-top: 0.75rem;
-  }
-
-  /* VERDICT BOX */
-  .verdict {
-    background: var(--charcoal);
-    color: white;
-    padding: 1.25rem 1.75rem;
-    border-radius: 4px;
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    line-height: 1.65;
-  }
-  .verdict strong { color: var(--green); }
-
-  /* WHAT I LEARNED */
-  .learned {
-    background: var(--charcoal);
-    color: white;
-    padding: 3rem 2rem;
-    margin-top: 4rem;
-  }
-  .learned-inner {
-    max-width: 820px;
-    margin: 0 auto;
-  }
-  .learned h2 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.8rem;
-    color: white;
-    margin-bottom: 0.5rem;
-  }
-  .learned-sub {
-    color: rgba(255,255,255,0.5);
-    font-size: 0.9rem;
-    margin-bottom: 2rem;
-  }
-  .learned-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.25rem;
-  }
-  .learned-item {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-top: 2px solid var(--green);
-    padding: 1.25rem 1.5rem;
-    border-radius: 4px;
-  }
-  .learned-item h4 {
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--green);
-    margin-bottom: 0.5rem;
-  }
-  .learned-item p {
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.65);
-    line-height: 1.6;
-  }
-
-  /* FOOTER / CONTACT */
-  footer {
-    background: #f0f6f5;
-    border-top: 1px solid var(--border);
-    padding: 2.5rem 2rem;
-    text-align: center;
-  }
-  footer .footer-inner { max-width: 820px; margin: 0 auto; }
-  footer h3 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.3rem;
-    color: var(--charcoal);
-    margin-bottom: 0.5rem;
-  }
-  footer p { font-size: 0.88rem; color: var(--muted); margin-bottom: 1rem; }
-  .contact-links {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .contact-link {
-    display: inline-block;
-    padding: 0.55rem 1.4rem;
-    border: 1.5px solid var(--green);
-    color: var(--green);
-    text-decoration: none;
-    font-size: 0.82rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    border-radius: 3px;
-    transition: background 0.2s, color 0.2s;
-  }
-  .contact-link:hover {
-    background: var(--green);
-    color: white;
-  }
-  .footer-note {
-    margin-top: 1.75rem;
-    font-size: 0.75rem;
-    color: #aabcbc;
-  }
-
-  /* RESPONSIVE */
-  @media (max-width: 600px) {
-    .nav-links { display: none; }
-    .hero { padding: 3rem 1.25rem 2.5rem; }
-    .content { padding: 0 1.25rem 3rem; }
-    .situation { margin: 2rem 1.25rem; padding: 1.5rem; }
-    .artifact { padding: 1.25rem; }
-    .step-header { gap: 1rem; }
-    .learned { padding: 2rem 1.25rem; }
-  }
+:root{
+  --navy:#0a1f44; --navy-2:#10295c; --blue:#1b6de0; --blue-soft:#e7f1fd;
+  --green:#1fa34a; --green-soft:#e6f6ec; --ink:#101828; --muted:#5b6b7f;
+  --line:#e3e9f2; --card:#ffffff; --bg:#f6f9fd; --amber:#b7791f; --amber-soft:#fdf3e3;
+  --radius:18px; --shadow:0 10px 30px rgba(10,31,68,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--ink);background:var(--bg);line-height:1.65;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.display{font-family:'Space Grotesk','Inter',sans-serif;line-height:1.15;letter-spacing:-.01em}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+/* progress */
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--blue),var(--green));z-index:200}
+/* nav */
+nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav-inner{display:flex;align-items:center;gap:6px;max-width:1080px;margin:0 auto;padding:12px 24px;overflow-x:auto}
+.nav-inner a{white-space:nowrap;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:8px 12px;border-radius:999px;transition:.2s}
+.nav-inner a:hover{color:var(--navy);background:var(--blue-soft)}
+.nav-inner a.active{color:#fff;background:var(--navy)}
+.brand{font-family:'Space Grotesk';font-weight:700;color:var(--navy);margin-right:auto;font-size:15px;white-space:nowrap}
+/* hero */
+.hero{background:radial-gradient(1200px 500px at 80% -10%,#1b6de055,transparent),linear-gradient(160deg,var(--navy) 0%,var(--navy-2) 70%);color:#fff;padding:96px 0 88px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-120px;top:-120px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,#1fa34a33,transparent 70%)}
+.eyebrow{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.22em;color:#9fc2f5;border:1px solid #2c4a7d;padding:7px 14px;border-radius:999px;margin-bottom:26px}
+.hero h1{font-size:clamp(40px,6vw,68px);font-weight:700;max-width:800px}
+.hero h1 span{color:#7db4f7}
+.hero p.sub{margin-top:20px;font-size:19px;color:#c3d4ee;max-width:640px}
+.hero .byline{margin-top:28px;display:flex;align-items:center;gap:14px}
+.avatar{width:56px;height:56px;border-radius:50%;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,var(--blue),var(--green));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px}
+.byline small{color:#9fb3d4;display:block;font-size:13px}
+.hero-stats{display:flex;gap:12px;margin-top:36px;flex-wrap:wrap}
+.stat{background:#ffffff14;border:1px solid #ffffff22;border-radius:14px;padding:14px 20px;backdrop-filter:blur(6px)}
+.stat b{font-size:24px;font-family:'Space Grotesk';display:block}
+.stat span{font-size:12.5px;color:#a9bede}
+/* sections */
+section{padding:72px 0}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:14px}
+.sec-num{font-family:'Space Grotesk';font-weight:700;font-size:14px;color:#fff;background:var(--blue);border-radius:10px;padding:6px 12px;letter-spacing:.08em}
+.sec-head h2{font-size:clamp(26px,3.4vw,36px);color:var(--navy)}
+.sec-intro{color:var(--muted);font-size:17px;max-width:720px;margin-bottom:32px}
+/* cards */
+.grid{display:grid;gap:18px}
+.g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:repeat(2,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:860px){.g3,.g4{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+@media(max-width:560px){.g3,.g4{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);transition:transform .25s,box-shadow .25s}
+.card:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(10,31,68,.12)}
+.card h3{font-size:18px;color:var(--navy);margin-bottom:10px}
+.card p{font-size:15px;color:var(--muted)}
+.card .tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.1em;color:var(--blue);background:var(--blue-soft);border-radius:999px;padding:5px 12px;margin-bottom:12px}
+.card.pick{border:2px solid var(--green);position:relative}
+.card.pick::after{content:"MY PICK";position:absolute;top:-13px;right:18px;background:var(--green);color:#fff;font-size:11px;font-weight:700;letter-spacing:.12em;border-radius:999px;padding:4px 12px}
+.card.dim{opacity:.75}
+.price{font-family:'Space Grotesk';font-size:30px;font-weight:700;color:var(--navy)}
+.bar{height:10px;border-radius:999px;background:var(--blue-soft);margin-top:14px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--blue),var(--green));transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
+.bar-label{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:8px}
+/* takeaway */
+.takeaway{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border-radius:var(--radius);padding:32px;margin-top:28px;position:relative;overflow:hidden}
+.takeaway::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--green)}
+.takeaway h3{color:#9fc2f5;font-size:13px;letter-spacing:.2em;margin-bottom:10px}
+.takeaway p{font-size:18px;color:#eaf1fd;max-width:760px}
+/* artifacts */
+details.artifact{background:#fff;border:1px solid var(--line);border-radius:var(--radius);margin-top:18px;overflow:hidden;box-shadow:var(--shadow)}
+details.artifact summary{cursor:pointer;list-style:none;padding:20px 26px;display:flex;align-items:center;gap:14px;font-weight:600;color:var(--navy)}
+details.artifact summary::-webkit-details-marker{display:none}
+.doc-icon{width:42px;height:42px;border-radius:12px;background:var(--blue-soft);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+details.artifact summary .k{font-size:12px;color:var(--muted);font-weight:500;display:block}
+details.artifact summary .chev{margin-left:auto;color:var(--muted);transition:transform .25s;font-size:18px}
+details[open].artifact summary .chev{transform:rotate(180deg)}
+.doc-body{padding:6px 30px 28px;border-top:1px dashed var(--line);font-size:15px;color:#33415c}
+.doc-body p{margin:14px 0}
+.doc-body .meta{background:var(--bg);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--muted);margin:16px 0}
+.attrib{font-size:12.5px;color:#98a4b8;font-style:italic;margin-top:16px}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.chip{background:#fff;border:1.5px solid var(--blue);color:var(--navy);font-weight:600;font-size:14px;border-radius:999px;padding:9px 18px}
+.chip.green{border-color:var(--green);background:var(--green-soft)}
+.chip.amber{border-color:var(--amber);background:var(--amber-soft)}
+.scenario{background:var(--navy);color:#fff;border-radius:var(--radius);padding:26px;margin-top:8px;font-size:16px}
+.scenario b{color:#7db4f7}
+/* budget bars */
+.budget{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);margin-top:6px}
+.brow{margin:16px 0}
+.brow .lab{display:flex;justify-content:space-between;font-weight:600;font-size:15px;color:var(--navy);margin-bottom:8px}
+.btrack{height:16px;background:var(--bg);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.bfill{height:100%;width:0;border-radius:999px;transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
+.brow small{color:var(--muted);font-size:13px}
+/* donut */
+.donut-wrap{display:flex;gap:36px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:30px;box-shadow:var(--shadow);margin-top:6px}
+.legend{display:grid;gap:12px;min-width:240px}
+.leg{display:flex;align-items:center;gap:12px;font-size:15px}
+.leg i{width:14px;height:14px;border-radius:4px;flex-shrink:0}
+.leg b{margin-left:auto;font-family:'Space Grotesk'}
+/* qa */
+.qa{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
+.qa h3{color:var(--blue);font-size:16px;margin-bottom:10px}
+.qa p{font-size:15px;color:var(--muted)}
+.verdict{grid-column:1/-1;background:linear-gradient(135deg,#0a1f44,#14315e);color:#fff;border-radius:var(--radius);padding:28px}
+.verdict h3{color:#7db4f7;font-size:13px;letter-spacing:.2em;margin-bottom:10px}
+.verdict p{font-size:17px;color:#eaf1fd}
+/* cities */
+.city{position:relative}
+.city .status{font-size:11.5px;font-weight:700;letter-spacing:.12em;border-radius:999px;padding:5px 12px;display:inline-block;margin-bottom:12px}
+.st-pick{background:var(--green-soft);color:var(--green)} .st-block{background:#fde8e8;color:#c03636} .st-risk{background:var(--amber-soft);color:var(--amber)} .st-frag{background:var(--blue-soft);color:var(--blue)}
+/* reveal */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+/* footer */
+footer{background:var(--navy);color:#9fb3d4;padding:48px 0;text-align:center;font-size:14px}
+footer b{color:#fff}
 </style>
 </head>
 <body>
+<div id="progress"></div>
+<nav><div class="nav-inner">
+<span class="brand">Waymo Strategy Analysis</span>
+<a href="#seeing">01 Seeing</a><a href="#data">02 Data</a><a href="#world">03 World Model</a><a href="#rewards">04 Rewards</a><a href="#moat">05 Moat</a><a href="#launch">06 Launch</a>
+</div></nav>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-brand">Hoang Nguyen <span>(David)</span></div>
-  <ul class="nav-links">
-    <li><a href="#step1">DL Basics</a></li>
-    <li><a href="#step2">Perception</a></li>
-    <li><a href="#step3">World Models</a></li>
-    <li><a href="#step4">RL & Planning</a></li>
-    <li><a href="#step5">Data Strategy</a></li>
-    <li><a href="#step6">Recommendation</a></li>
-  </ul>
-</nav>
-
-<!-- HERO -->
-<header class="hero">
-  <div class="hero-inner">
-    <div class="hero-tag">MIS 432 · AI in Business</div>
-    <h1>Waymo Strategy Analysis:<br><em>A Case Study in Applied AI Decision-Making</em></h1>
-    <p class="hero-sub">A multi-step simulated strategy-analyst assignment working through the technology, data strategy, and business tradeoffs behind autonomous vehicle deployment — culminating in a city launch recommendation to the VP of Strategy.</p>
-    <div class="hero-meta">
-      <div class="hero-meta-item"><strong>Analyst</strong>Hoang Nguyen (David)</div>
-      <div class="hero-meta-item"><strong>Scope</strong>6 Steps · Deep Learning to City Rec</div>
-      <div class="hero-meta-item"><strong>Recommendation</strong>Seattle — City #5</div>
-      <div class="hero-meta-item"><strong>Date</strong>May 2026</div>
-    </div>
-  </div>
-</header>
-
-<!-- SITUATION -->
-<div class="situation">
-  <div class="situation-label">The Situation</div>
-  <p>Two weeks ago in Austin, Texas, a Waymo car hesitated for 14 seconds at an unprotected left turn. No safety issue, but the rider gave it a 2-star review and tweeted about it. Engineering said it was both a perception problem and a planner problem. The VP of Strategy asked me to figure out what that meant — and to recommend which city Waymo should launch in next.</p>
+<header class="hero"><div class="wrap">
+<span class="eyebrow">A STRATEGY CASE STUDY</span>
+<h1>Waymo Strategy <span>Analysis</span></h1>
+<p class="sub">Six simulations. One question: what actually makes an AI product win in the real world?</p>
+<div class="byline"><div class="avatar" style="padding:0;overflow:hidden"><img src="data:image/jpeg;base64,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" alt="Hoang Nguyen (David)" style="width:100%;height:100%;object-fit:cover;display:block"></div><div><b>Hoang Nguyen (David)</b><small>Strategy analyst simulation series</small></div></div>
+<div class="hero-stats">
+<div class="stat"><b>6</b><span>simulation chapters</span></div>
+<div class="stat"><b>$1B</b><span>budget allocated</span></div>
+<div class="stat"><b>4</b><span>strategy artifacts</span></div>
+<div class="stat"><b>1</b><span>city recommended</span></div>
 </div>
+</div></header>
 
-<!-- MAIN CONTENT -->
-<main class="content">
+<section id="seeing"><div class="wrap rv">
+<div class="sec-head"><span class="sec-num">01</span><h2>Learning to See</h2></div>
+<p class="sec-intro">Before any strategy, I needed to understand what a model actually is. So I trained one by hand.</p>
+<div class="grid g3">
+<div class="card rv"><span class="tag">NEURAL NETS</span><h3>Not intelligent, just tracking</h3><p>I labeled images "cat" or "not cat" and watched the network's weights shift with each example. The model is not intelligent in any meaningful sense. It tracks which features show up with which label, and more examples make the tracking better. When it failed on a tricky image, the lesson was clear: example quality matters as much as quantity.</p></div>
+<div class="card rv"><span class="tag">CNN</span><h3>What "deep" actually means</h3><p>I watched a four-stage visualization turn a pedestrian photo into a confident classification. Pixels became edges, edges became body parts, body parts became a person. Nobody tells each layer what to look for. It discovers the features on its own. That layering is what makes it deep.</p></div>
+<div class="card rv"><span class="tag">KEY THREAD</span><h3>The long-tail problem</h3><p>A few common scenarios dominate driving data. Thousands of rare ones, a costumed pedestrian, debris on the road, a wheelchair behind a parked truck, barely appear. AI products fail in that gap between the common and the rare. It became the thread running through every step that followed.</p></div>
+</div>
+</div></section>
 
-  <!-- STEP 1 -->
-  <section class="step" id="step1">
-    <div class="step-header">
-      <div class="step-number">1</div>
-      <div class="step-title-block">
-        <div class="step-eyebrow">Foundation</div>
-        <h2 class="step-title">Deep Learning Basics</h2>
-      </div>
-    </div>
-    <p>I started by training a small neural network by hand, labeling images as "cat" or "not cat" and watching the network's feature weights shift with each labeled example. The exercise made something concrete that had previously felt abstract: the model is not intelligent in any meaningful sense. It is just tracking which features reliably co-occur with a label, and it gets better at that tracking the more examples you give it. The moment the model failed on a tricky image, it was clear that the quality of the examples matters just as much as the quantity.</p>
-    <p>I then studied a four-stage visualization of a convolutional neural network processing a pedestrian image, watching raw pixels become edges, edges become body parts, and body parts become a confident object classification. The CNN's layered architecture is what makes it "deep" — each layer builds on the last, and no one tells it which features to look for. It discovers them. The final concept I came away with was the long-tail problem: a small number of common scenarios dominate real-world driving data, while thousands of rare ones — costumed pedestrians, debris on the road, wheelchair users behind parked trucks — barely appear in training sets. That gap between the common and the rare is where AI products fail in the real world, and it became the thread running through every step that followed.</p>
-  </section>
+<section id="data" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)"><div class="wrap rv">
+<div class="sec-head"><span class="sec-num">02</span><h2>The $100M Data Decision</h2></div>
+<p class="sec-intro">As a Waymo ML analyst, I evaluated three training-dataset vendors, trained a simulated perception network on each, and watched accuracy diverge on routine versus edge-case scenes.</p>
+<div class="grid g3">
+<div class="card dim rv"><span class="tag">DATASET A</span><h3>Easy Miles</h3><div class="price">$100M</div><p>Sunny Phoenix daylight frames. Strong on common scenarios, falls apart on rare ones.</p><div class="bar"><i data-w="88"></i></div><div class="bar-label"><span>Common scenes</span><span>88%</span></div><div class="bar"><i data-w="41"></i></div><div class="bar-label"><span>Edge cases</span><span>41%</span></div></div>
+<div class="card dim rv"><span class="tag">DATASET B</span><h3>Balanced</h3><div class="price">$180M</div><p>Varied conditions, middle of the road. Respectable everywhere, excellent nowhere.</p><div class="bar"><i data-w="82"></i></div><div class="bar-label"><span>Common scenes</span><span>82%</span></div><div class="bar-label"><span>Edge cases</span><span>63%</span></div><div class="bar"><i data-w="63"></i></div></div>
+<div class="card pick rv"><span class="tag">DATASET C</span><h3>Edge-Case Heavy</h3><div class="price">$300M</div><p>Weighted toward rare scenarios. Costs three times as much, holds up where it matters.</p><div class="bar"><i data-w="84"></i></div><div class="bar-label"><span>Common scenes</span><span>84%</span></div><div class="bar"><i data-w="79"></i></div><div class="bar-label"><span>Edge cases</span><span>79%</span></div></div>
+</div>
+<div class="takeaway rv"><h3>THE TAKEAWAY</h3><p>Identical code plus different data produces completely different cars. The right question about any AI product is not how smart the model is. It is what trained it, and whether that data matches the conditions the model will face in deployment.</p></div>
+<details class="artifact rv"><summary><span class="doc-icon">&#9993;</span><span>Artifact: CFO Email, Dataset Recommendation<span class="k">Click to read the full memo</span></span><span class="chev">&#9662;</span></summary>
+<div class="doc-body">
+<div class="meta"><b>To:</b> Lance (CFO) &nbsp;&middot;&nbsp; <b>Subject:</b> Dataset Recommendation</div>
+<p>Hi Lance,</p>
+<p>I'm recommending we go with Dataset C, the Edge-Case Heavy option at $300M.</p>
+<p>The way I see it, our biggest risk isn't how the car performs on a sunny Tuesday in Phoenix. It's how it handles the weird, rare stuff that nobody expects. That's exactly what causes safety incidents, draws regulatory attention, and ends up on Twitter. Dataset C is the only option that actually prepares the model for those moments.</p>
+<p>It also puts us in a stronger competitive position long term. When this market matures, the companies still standing will be the ones with reliable safety records across all conditions, not just the easy ones.</p>
+<p>The tradeoff I'm accepting is the higher cost and the longer timeline, 18 months versus 8. I think that's worth it. One serious edge case failure would cost us far more than the extra $120M.</p>
+<p class="attrib">Drafted with Claude and edited for voice and accuracy.</p>
+</div></details>
+</div></section>
 
-  <!-- STEP 2 -->
-  <section class="step" id="step2">
-    <div class="step-header">
-      <div class="step-number">2</div>
-      <div class="step-title-block">
-        <div class="step-eyebrow">Perception</div>
-        <h2 class="step-title">Deep Learning at Waymo</h2>
-      </div>
-    </div>
-    <p>I played the role of a Waymo ML analyst evaluating three training-dataset vendors: Dataset A (Easy Miles, $100M — sunny Phoenix daylight frames), Dataset B (Balanced, $180M — varied conditions), and Dataset C (Edge-Case Heavy, $300M — weighted toward rare scenarios). I trained a simulated perception network on each and watched how accuracy diverged on routine versus edge-case test scenes. The results were striking: Dataset A produced strong performance on common scenarios and fell apart on rare ones. Dataset C cost three times as much but held up where it mattered.</p>
-    <p>The key insight I took from this step is that two AI systems built with identical code but different training data will behave in completely different ways in the real world. The right question to ask about any AI product is not how smart the model is — it is what data trained it, and whether that data actually matches the conditions the model will face in deployment. I then drafted a short email to Waymo's CFO defending my dataset choice.</p>
+<section id="world"><div class="wrap rv">
+<div class="sec-head"><span class="sec-num">03</span><h2>The World Model</h2></div>
+<p class="sec-intro">To beat the long-tail problem, Waymo uses a world model: AI trained on reality that generates driving scenarios nobody ever recorded.</p>
+<div class="grid g2">
+<div class="card rv"><span class="tag">HOW IT WORKS</span><h3>Scenarios from ingredients</h3><p>I built rare scenarios by composing four ingredients. The model assembles each one from learned knowledge, not recorded footage.</p>
+<div class="chips"><span class="chip">Heavy rain</span><span class="chip">Night</span><span class="chip">Wheelchair user</span><span class="chip">Parked truck</span></div>
+<div class="chips"><span class="chip green">Cyclist</span><span class="chip green">Against traffic</span><span class="chip green">Construction zone</span><span class="chip green">Dusk</span></div>
+</div>
+<div class="card rv"><span class="tag">THE LEAP</span><h3>50 million miles, in seconds</h3><p>The simulator estimated it would take roughly 50 million miles of real driving to encounter those scenarios at meaningful frequency. The world model generated them in seconds. Built on Genie 3 through transfer learning, it already understood rain, night, occlusion, and construction from general video. It needed no driving-specific recordings.</p></div>
+</div>
+<div class="scenario rv"><b>Try it mentally:</b> a wheelchair user emerging from behind a parked truck during heavy rain at night. No fleet on Earth has that footage. The world model renders it on demand.</div>
+<details class="artifact rv"><summary><span class="doc-icon">&#9993;</span><span>Artifact: Internal Brief, World Model as Strategic Moat<span class="k">Click to read the full memo</span></span><span class="chev">&#9662;</span></summary>
+<div class="doc-body">
+<div class="meta"><b>To:</b> Lance (VP Strategy) &nbsp;&middot;&nbsp; <b>Subject:</b> World Model Investment</div>
+<p>Hi Lance,</p>
+<p>I want to make the case that our world model investment is a competitive advantage, not just an R&amp;D line item.</p>
+<p>Here is the core argument. Fleet driving scales with miles. Rare scenarios do not. Even Tesla's 6 million cars collecting data every day cannot reliably surface events like a wheelchair user emerging from behind a parked truck during heavy rain at night, or a cyclist riding against traffic through a construction zone at dusk. I built both of those scenarios in our simulator in seconds. To encounter them naturally at meaningful frequency would require roughly 50 million miles of real world driving. We generated them on demand.</p>
+<p>Tesla's volume advantage is real and I would not dismiss it. But volume solves the head of the distribution, the everyday stuff. The long tail is what kills deployments, and no amount of passive fleet data closes that gap efficiently. Waymo's world model, built on Genie 3 through transfer learning, can compose scenarios from ingredients it already understands without needing a single recorded example of that exact situation.</p>
+<p>If we stop investing here we do not just slow down. We hand over the one advantage Tesla cannot replicate by selling more cars.</p>
+<p class="attrib">Drafted with Claude and edited for voice and accuracy.</p>
+</div></details>
+</div></section>
 
-    <div class="artifact">
-      <div class="artifact-label">Artifact · CFO Email — Dataset Recommendation</div>
-      <p><strong>To:</strong> Lance (CFO) &nbsp;&nbsp; <strong>Subject:</strong> Dataset Recommendation</p>
-      <p>Hi Lance,</p>
-      <p>I'm recommending we go with Dataset C, the Edge-Case Heavy option at $300M.</p>
-      <p>The way I see it, our biggest risk isn't how the car performs on a sunny Tuesday in Phoenix. It's how it handles the weird, rare stuff that nobody expects. That's exactly what causes safety incidents, draws regulatory attention, and ends up on Twitter. Dataset C is the only option that actually prepares the model for those moments.</p>
-      <p>It also puts us in a stronger competitive position long term. When this market matures, the companies still standing will be the ones with reliable safety records across all conditions, not just the easy ones.</p>
-      <p>The tradeoff I'm accepting is the higher cost and the longer timeline — 18 months versus 8. I think that's worth it. One serious edge case failure would cost us far more than the extra $120M.</p>
-      <div class="artifact-credit">Drafted with Claude and edited for voice and accuracy.</div>
-    </div>
-  </section>
+<section id="rewards" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)"><div class="wrap rv">
+<div class="sec-head"><span class="sec-num">04</span><h2>Teaching the Planner</h2></div>
+<p class="sec-intro">I designed a reward function for the Austin-style unprotected left turn. The simulator gave me a 20-point penalty budget across three outcomes, plus a separate reward for finishing the turn.</p>
+<div class="grid g2">
+<div class="budget rv">
+<div class="brow"><div class="lab"><span>Collisions</span><span>12 / 20 pts</span></div><div class="btrack"><div class="bfill" data-w="60" style="background:linear-gradient(90deg,#c03636,#e06565)"></div></div><small>Weighted heaviest. A crash here is not recoverable.</small></div>
+<div class="brow"><div class="lab"><span>Close calls</span><span>6 / 20 pts</span></div><div class="btrack"><div class="bfill" data-w="30" style="background:linear-gradient(90deg,#b7791f,#e0a63f)"></div></div><small>Serious, but the car drove away from it.</small></div>
+<div class="brow"><div class="lab"><span>Wait time</span><span>2 / 20 pts</span></div><div class="btrack"><div class="bfill" data-w="10" style="background:linear-gradient(90deg,var(--blue),#6ea8f0)"></div></div><small>A few extra seconds of hesitation is cheap.</small></div>
+<div class="brow"><div class="lab"><span>Completion reward</span><span style="color:var(--green)">+8 pts</span></div><div class="btrack"><div class="bfill" data-w="40" style="background:linear-gradient(90deg,var(--green),#5cc47e)"></div></div><small>Finishing the turn still matters.</small></div>
+</div>
+<div>
+<div class="grid" style="grid-template-columns:1fr 1fr;gap:14px">
+<div class="card rv" style="text-align:center"><div class="price" style="color:var(--green)">288<span style="font-size:16px;color:var(--muted)">/300</span></div><p>Successful turns<br><small>Target was 285. Cleared.</small></p></div>
+<div class="card rv" style="text-align:center"><div class="price" style="color:var(--green)">1</div><p>Collision<br><small>Threshold met.</small></p></div>
+<div class="card rv" style="text-align:center"><div class="price" style="color:var(--amber)">9.2s</div><p>Average wait<br><small>Target was under 8s. Missed, and accepted.</small></p></div>
+<div class="card rv" style="text-align:center"><div class="price" style="color:var(--blue)">+8</div><p>Completion reward<br><small>Hesitate, but finish.</small></p></div>
+</div>
+</div>
+</div>
+<div class="takeaway rv"><h3>THE TAKEAWAY</h3><p>Moving the sliders and watching each fix create a new problem made the alignment problem feel real. You cannot ask a model to maximize everything at once. You pick your priorities, document the tradeoff, and stay ready to retune.</p></div>
+<details class="artifact rv"><summary><span class="doc-icon">&#9993;</span><span>Artifact: Safety Board Defense, Reward Function<span class="k">Click to read the full defense</span></span><span class="chev">&#9662;</span></summary>
+<div class="doc-body">
+<p>The reward function I am bringing to this board was designed around one priority above all others: keeping the car out of situations it cannot recover from. I set the completion reward at +8 and distributed the full 20 penalty points with collision weighted heaviest at 12, close calls at 6, and wait time at just 2.</p>
+<p>On the 300-attempt test set the policy hit 288 successful turns, clearing the 285 completion bar. It produced 1 collision, meeting the safety threshold. Average wait time came in at 9.2 seconds, which I will be direct about: that misses the under 8 second target. That is the tradeoff I am explicitly accepting, and I want to explain why I think it is the right one.</p>
+<p>By keeping the wait penalty low the car learned to hold for gaps it was confident about rather than forcing turns under ambiguity. The result is a system that is conservative at unprotected lefts, which is exactly the behavior we should want, given that a collision at that maneuver carries consequences that a 1.2 second average delay simply does not.</p>
+<p>I am not presenting this as a perfect result. I am presenting it as a defensible one, and I am prepared to defend the reasoning behind every number in that penalty budget.</p>
+<p class="attrib">Drafted with Claude and edited for voice and accuracy.</p>
+</div></details>
+</div></section>
 
-  <!-- STEP 3 -->
-  <section class="step" id="step3">
-    <div class="step-header">
-      <div class="step-number">3</div>
-      <div class="step-title-block">
-        <div class="step-eyebrow">Simulation</div>
-        <h2 class="step-title">World Models</h2>
-      </div>
-    </div>
-    <p>I explored how Waymo uses a world model — an AI trained on reality that can generate driving scenarios that have never been recorded — to solve the long-tail problem from Step 1. I built rare scenarios by composing four ingredients: weather, time of day, actors, and wildcards. One scenario was a wheelchair user emerging from behind a parked truck during heavy rain at night. Another was a cyclist riding against traffic through a construction zone at dusk. The world model assembled each one from learned knowledge rather than recorded footage.</p>
-    <p>The simulator estimated it would take roughly 50 million miles of real-world driving to encounter those scenarios at meaningful frequency. The world model generated them in seconds. Waymo's world model is built on Genie 3 through transfer learning, meaning it already understood rain, night, occlusion, and construction zones from general video — it did not need driving-specific recordings. I then drafted a brief arguing that this capability is a strategic moat, not just an R&D line item.</p>
+<section id="moat"><div class="wrap rv">
+<div class="sec-head"><span class="sec-num">05</span><h2>Simulation-First vs Fleet-First</h2></div>
+<p class="sec-intro">I allocated a $1B Waymo data budget across five categories, and watched how each mix builds a fundamentally different company over five years.</p>
+<div class="donut-wrap rv">
+<svg width="220" height="220" viewBox="0 0 220 220" id="donut">
+<circle cx="110" cy="110" r="84" fill="none" stroke="#eef2f7" stroke-width="34"/>
+<circle class="seg" cx="110" cy="110" r="84" fill="none" stroke="#1b6de0" stroke-width="34" stroke-dasharray="0 528" data-val="35" transform="rotate(-90 110 110)" stroke-linecap="butt"/>
+<circle class="seg" cx="110" cy="110" r="84" fill="none" stroke="#1fa34a" stroke-width="34" stroke-dasharray="0 528" data-val="30" transform="rotate(-90 110 110)"/>
+<circle class="seg" cx="110" cy="110" r="84" fill="none" stroke="#7db4f7" stroke-width="34" stroke-dasharray="0 528" data-val="15" transform="rotate(-90 110 110)"/>
+<circle class="seg" cx="110" cy="110" r="84" fill="none" stroke="#b7791f" stroke-width="34" stroke-dasharray="0 528" data-val="10" transform="rotate(-90 110 110)"/>
+<circle class="seg" cx="110" cy="110" r="84" fill="none" stroke="#c3cfdf" stroke-width="34" stroke-dasharray="0 528" data-val="10" transform="rotate(-90 110 110)"/>
+<text x="110" y="104" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="30" fill="#0a1f44">$1B</text>
+<text x="110" y="128" text-anchor="middle" font-size="12" fill="#5b6b7f">data budget</text>
+</svg>
+<div class="legend">
+<div class="leg"><i style="background:#1b6de0"></i>Simulation capacity<b>35%</b></div>
+<div class="leg"><i style="background:#1fa34a"></i>Fleet expansion<b>30%</b></div>
+<div class="leg"><i style="background:#7db4f7"></i>Human labelers<b>15%</b></div>
+<div class="leg"><i style="background:#b7791f"></i>Sensor upgrades<b>10%</b></div>
+<div class="leg"><i style="background:#c3cfdf"></i>Data partnerships<b>10%</b></div>
+</div>
+</div>
+<p class="sec-intro" style="margin-top:36px">To test whether I had internalized the three evaluation questions, I applied them to Tesla.</p>
+<div class="grid g3">
+<div class="qa rv"><h3>Where does their data come from?</h3><p>Directly from customers, whether they know it or not. Every Autopilot vehicle uploads camera feeds, interventions, and disengagements. In shadow mode the AI predicts silently and Tesla compares against what the human did. Six million cars across dozens of countries is coverage no purpose-built fleet can match.</p></div>
+<div class="qa rv"><h3>Does the pipeline compound?</h3><p>It compounds, but passively. More cars means more data, better models, more buyers. The catch: Tesla cannot decide on a Tuesday morning that it needs more icy intersections at dawn. It waits for the world to produce them, so rare scenarios accumulate slowly even at massive scale.</p></div>
+<div class="qa rv"><h3>Can money alone replicate it?</h3><p>Not quickly. You would need millions of vehicles running for a decade minimum. But Waymo shows you can route around the problem: targeted simulation closes the gap on the long tail specifically, which is exactly where the passive approach is weakest.</p></div>
+<div class="verdict rv"><h3>VERDICT</h3><p>Medium to strong moat. Tesla's fleet data is genuinely hard to replicate at scale, but the passive way it compounds leaves the long tail exposed to simulation-first competitors who manufacture rare scenarios on demand instead of waiting for the world to produce them.</p></div>
+</div>
+<p class="attrib" style="margin-top:14px">Drafted with Claude and edited for voice and accuracy.</p>
+</div></section>
 
-    <div class="artifact">
-      <div class="artifact-label">Artifact · Internal Brief — World Model as Strategic Moat</div>
-      <p><strong>To:</strong> Lance (VP Strategy) &nbsp;&nbsp; <strong>Subject:</strong> World Model Investment</p>
-      <p>Hi Lance,</p>
-      <p>I want to make the case that our world model investment is a competitive advantage, not just an R&D line item.</p>
-      <p>Here is the core argument. Fleet driving scales with miles. Rare scenarios do not. Even Tesla's 6 million cars collecting data every day cannot reliably surface events like a wheelchair user emerging from behind a parked truck during heavy rain at night or a cyclist riding against traffic through a construction zone at dusk. I built both of those scenarios in our simulator in seconds. To encounter them naturally at meaningful frequency would require roughly 50 million miles of real world driving. We generated them on demand.</p>
-      <p>Tesla's volume advantage is real and I would not dismiss it. But volume solves the head of the distribution — the everyday stuff. The long tail is what kills deployments, and no amount of passive fleet data closes that gap efficiently. Waymo's world model, built on Genie 3 through transfer learning, can compose scenarios from ingredients it already understands without needing a single recorded example of that exact situation.</p>
-      <p>If we stop investing here we do not just slow down. We hand over the one advantage Tesla cannot replicate by selling more cars.</p>
-      <div class="artifact-credit">Drafted with Claude and edited for voice and accuracy.</div>
-    </div>
-  </section>
+<section id="launch" style="background:#fff;border-top:1px solid var(--line)"><div class="wrap rv">
+<div class="sec-head"><span class="sec-num">06</span><h2>Picking City #5</h2></div>
+<p class="sec-intro">I analyzed three real social-license incidents, protest coning in San Francisco, a blocked fire truck in Austin, taxi-union opposition in Miami, then weighed four candidate cities.</p>
+<div class="grid g4">
+<div class="card pick rv"><span class="status st-pick">RECOMMENDED</span><h3>Seattle</h3><p>Tech-friendly regulators, no organized opposition yet. Rain and hills stress test the Dataset C model in ways that compound into advantage for every rain-heavy city after.</p></div>
+<div class="card dim rv"><span class="status st-block">BLOCKED</span><h3>New York</h3><p>Expansion already blocked by the Transport Workers Union earlier in 2026. No path without a labor fight.</p></div>
+<div class="card dim rv"><span class="status st-risk">RISKY</span><h3>Atlanta</h3><p>Active NHTSA investigation into school bus violations, with lawmakers calling for a pause.</p></div>
+<div class="card dim rv"><span class="status st-frag">FRAGILE</span><h3>Miami</h3><p>Less organized opposition, but hurricane-season incidents would define the public narrative fast.</p></div>
+</div>
+<details class="artifact rv"><summary><span class="doc-icon">&#9993;</span><span>Artifact: Recommendation Memo, City #5 Launch<span class="k">Click to read the full memo</span></span><span class="chev">&#9662;</span></summary>
+<div class="doc-body">
+<div class="meta"><b>TO:</b> VP of Strategy &nbsp;&middot;&nbsp; <b>FROM:</b> Strategy Analyst &nbsp;&middot;&nbsp; <b>RE:</b> City 5 Launch Recommendation &nbsp;&middot;&nbsp; <b>DATE:</b> May 2026</div>
+<p><b>Recommendation:</b> Launch city 5 in Seattle, and move now while the regulatory environment is still favorable and before a competitor establishes the Pacific Northwest narrative first.</p>
+<p><b>Tech readiness.</b> Seattle's constant rain, steep hills, and frequent construction zones are exactly the conditions that expose weak perception models, and that is precisely why it is the right environment for us right now. We are launching with Dataset C behind us, trained specifically on the rare compounding scenarios other datasets miss. Seattle will stress test our system in ways Phoenix and Austin never could, and that stress makes the model stronger for every city after it.</p>
+<p><b>Data moat growth.</b> Our $1B allocation puts 35% into simulation and 30% into fleet expansion, deliberately building the advantage Tesla cannot replicate. Seattle generates weather edge cases that are genuinely hard to manufacture even in simulation. Real rain on real hills, feeding a dataset that compounds in ways passive fleet collection cannot match. That coverage transfers directly to Portland, Vancouver, and Chicago.</p>
+<p><b>Social license path.</b> Seattle is winnable on community trust in a way New York and Atlanta are not right now. We engage transit unions, disability advocates, and bike safety groups before a single car hits the road, co-designing operating rules with them rather than presenting rules after the fact. Limited area pilot, transparent safety reporting, third party oversight, expansion only after jointly agreed benchmarks.</p>
+<p><b>The risk I am accepting.</b> Seattle's weather will surface edge cases our model has not seen, and some of those moments will be public. I accept that risk because our Dataset C investment and simulation coverage give us a stronger foundation than any competitor in similar conditions right now. Mitigation is proactive transparency: monthly safety reports, real data for oversight partners, and every public hesitation treated as a retraining opportunity rather than a crisis.</p>
+<p><b>What I am watching in the first six months.</b> Community partnerships holding through the first incidents. Edge case performance in rain staying within simulation predicted ranges. No regulatory escalation. Two early warnings would trigger recalibration: average wait times in complex intersections creeping above 9 seconds consistently, or a single partner organization publicly withdrawing from oversight.</p>
+<p class="attrib">Drafted with Claude and edited for voice and accuracy.</p>
+</div></details>
+</div></section>
 
-  <!-- STEP 4 -->
-  <section class="step" id="step4">
-    <div class="step-header">
-      <div class="step-number">4</div>
-      <div class="step-title-block">
-        <div class="step-eyebrow">Reinforcement Learning</div>
-        <h2 class="step-title">Planning &amp; the Alignment Problem</h2>
-      </div>
-    </div>
-    <p>I designed a reward function to teach Waymo's planner how to handle the Austin-style unprotected left turn. The simulator gave me a 20-point penalty budget to distribute across three outcomes — collisions, close calls, and wait time — plus a separate reward for completing a turn. I set the completion reward at +8 and weighted collision heaviest at 12 points, close calls at 6, and wait time at just 2. The reasoning was straightforward: a crash at an unprotected left is not a recoverable situation. A few extra seconds of hesitation is.</p>
-    <p>On the 300-attempt test set, the policy hit 288 successful turns (clearing the 285 bar), 1 collision (meeting the threshold), and a 9.2 second average wait time — which missed the under 8 second target. I accepted that tradeoff explicitly. The experience of moving the sliders and watching each fix create a new problem made the alignment problem feel real in a way that reading about it did not. You cannot ask a model to maximize everything at once. You pick your priorities, document the tradeoff, and stay ready to retune.</p>
+<footer><div class="wrap">
+<b>Waymo Strategy Analysis</b> &middot; Hoang Nguyen (David) &middot; 2026<br>
+<span style="font-size:13px">A hands-on strategy simulation series. Drafted with Claude and edited for voice and accuracy.</span>
+</div></footer>
 
-    <div class="artifact">
-      <div class="artifact-label">Artifact · Safety Board Defense — Reward Function</div>
-      <p>The reward function I am bringing to this board was designed around one priority above all others: keeping the car out of situations it cannot recover from. I set the completion reward at +8 and distributed the full 20 penalty points with collision weighted heaviest at 12, close calls at 6, and wait time at just 2. On the 300-attempt test set the policy hit 288 successful turns, clearing the 285 completion bar. It produced 1 collision, meeting the safety threshold. Average wait time came in at 9.2 seconds, which I will be direct about: that misses the under 8 second target. That is the tradeoff I am explicitly accepting and I want to explain why I think it is the right one. By keeping the wait penalty low the car learned to hold for gaps it was confident about rather than forcing turns under ambiguity. The result is a system that is conservative at unprotected lefts, which is exactly the behavior we should want given that a collision at that maneuver carries consequences that a 1.2 second average delay simply does not. I am not presenting this as a perfect result. I am presenting it as a defensible one, and I am prepared to defend the reasoning behind every number in that penalty budget.</p>
-      <div class="artifact-credit">Drafted with Claude and edited for voice and accuracy.</div>
-    </div>
-  </section>
-
-  <!-- STEP 5 -->
-  <section class="step" id="step5">
-    <div class="step-header">
-      <div class="step-number">5</div>
-      <div class="step-title-block">
-        <div class="step-eyebrow">Business Strategy</div>
-        <h2 class="step-title">Data Strategy &amp; the AI Business</h2>
-      </div>
-    </div>
-    <p>I shifted from technical concepts to business strategy, studying the contrast between Waymo's simulation-first approach and Tesla's fleet-first data strategy. I allocated a $1B Waymo data budget across five investment categories — putting 35% into simulation capacity, 30% into fleet expansion, 15% into human labelers, 10% into sensor upgrades, and 10% into data partnerships — and watched how different allocations produce fundamentally different companies over a five-year horizon.</p>
-    <p>To test whether I had actually internalized the three evaluation questions, I applied them to Tesla. The questions are: where does the data come from, does the pipeline compound on its own, and can a competitor replicate it with money alone? The analysis below is what I produced.</p>
-
-    <div class="artifact">
-      <div class="artifact-label">Artifact · Data Moat Evaluation — Tesla</div>
-      <p><strong>Where does their data come from?</strong> Tesla's data comes directly from its customers whether they know it or not. Every vehicle running Autopilot or Full Self-Driving is essentially a data collection unit, uploading camera feeds, driver interventions, and disengagement moments back to Tesla. The really clever part is shadow mode, where the AI runs predictions silently in the background without actually controlling the car, and Tesla compares those predictions against what the human driver actually did. At 6 million vehicles across dozens of countries and climates you end up with a dataset that covers an enormous range of real world conditions that no purpose built fleet could match on its own.</p>
-      <p><strong>Does the data pipeline compound?</strong> It does compound but it is not a clean flywheel. The loop is straightforward enough: more cars means more data, better data means better models, better models means more people buy Teslas, which means even more data. The catch is that the compounding is passive. Tesla cannot decide on a Tuesday morning that it needs more examples of icy intersections at dawn and just go generate them. It has to wait for those conditions to occur naturally across its fleet, which means rare scenarios still take a long time to accumulate even at massive scale.</p>
-      <p><strong>Can a competitor replicate it with money alone?</strong> Not realistically, at least not quickly. You would need to deploy millions of vehicles globally and run them long enough to build comparable coverage — that is a decade long project minimum even with unlimited capital. That said, Waymo is already demonstrating that you can partially route around this problem through simulation. Targeted scenario generation does not replace fleet scale but it closes the gap on the long tail specifically, which is where Tesla's passive approach is weakest.</p>
-      <div class="verdict"><strong>Verdict:</strong> Medium to strong moat. Tesla's fleet data is genuinely hard to replicate at scale but the passive nature of how it compounds leaves the long tail vulnerable to simulation-first competitors who can manufacture rare scenarios on demand instead of waiting for the world to produce them.</div>
-      <div class="artifact-credit">Drafted with Claude and edited for voice and accuracy.</div>
-    </div>
-  </section>
-
-  <!-- STEP 6 -->
-  <section class="step" id="step6">
-    <div class="step-header">
-      <div class="step-number">6</div>
-      <div class="step-title-block">
-        <div class="step-eyebrow">Final Deliverable</div>
-        <h2 class="step-title">The Recommendation</h2>
-      </div>
-    </div>
-    <p>I brought everything together by analyzing three real-world Waymo social-license incidents — protest coning in San Francisco, a blocked fire truck in Austin, and taxi-union opposition in Miami — and picked response strategies for each. I then weighed the social-license environment in four candidate cities against what I knew from the earlier steps about perception challenges, world model needs, planner behavior, and data-moat growth. New York's expansion had already been blocked by the Transport Workers Union earlier in 2026. Atlanta had an active NHTSA investigation into school bus violations. Miami had less organized opposition but hurricane-season incidents would define the public narrative fast.</p>
-    <p>Seattle emerged as the right choice: a tech-friendly regulatory environment, no organized opposition yet, and a weather environment that would stress test our Dataset C model in ways that would compound into real competitive advantage for every rain-heavy city that follows. The recommendation memo to the VP of Strategy is below.</p>
-
-    <div class="artifact">
-      <div class="artifact-label">Artifact · Recommendation Memo — City #5 Launch</div>
-      <p><strong>TO:</strong> VP of Strategy &nbsp; <strong>FROM:</strong> Strategy Analyst &nbsp; <strong>RE:</strong> City 5 Launch Recommendation &nbsp; <strong>DATE:</strong> May 2026</p>
-      <p><strong>Recommendation:</strong> Launch city 5 in Seattle, and move now while the regulatory environment is still favorable and before a competitor establishes the Pacific Northwest narrative first.</p>
-      <p><strong>Tech Readiness</strong></p>
-      <p>Seattle's constant rain, steep hills, and frequent construction zones are exactly the kinds of conditions that expose weak perception models and that is precisely why it is the right environment for us right now. We are going into this launch with Dataset C behind us which means our model has been trained specifically on the rare compounding scenarios that other datasets miss. A wheelchair user emerging from behind a parked truck in heavy rain at night is not a hypothetical for us anymore, it is a scenario we have already trained on. Seattle will stress test our system in ways Phoenix and Austin never could and that stress makes the model stronger for every city that comes after it.</p>
-      <p><strong>Data Moat Growth</strong></p>
-      <p>Our $1B allocation puts 35% into simulation and 30% into fleet expansion, reflecting a deliberate choice to keep building the advantage that Tesla cannot replicate. Seattle generates weather edge cases that are genuinely hard to manufacture even in simulation — real rain on real hills with real construction unpredictability. Every mile we drive there feeds back into a dataset that compounds in ways passive fleet collection cannot match because we are pairing real world miles with targeted simulation of the scenarios those miles surface. The data moat we build in Seattle is not just volume, it is coverage of a specific operating environment that will transfer directly to other rain-heavy cities like Portland, Vancouver, and Chicago.</p>
-      <p><strong>Social License Path</strong></p>
-      <p>Seattle is winnable on community trust in a way that New York and Atlanta simply are not right now. New York's expansion was already blocked by the TWU and Taxi Workers Alliance earlier this year. Atlanta has an active NHTSA investigation into school bus violations with state lawmakers calling for a pause. Seattle has organized advocates but not an organized opposition, which means we have a real window to get in front of this before it hardens. Our plan is to engage transit unions, disability advocates, and bike safety groups before a single car hits the road, co-designing operating rules around bus stops, curb access, and protected bike lanes with them rather than presenting rules to them after the fact. We commit to a limited area pilot with transparent safety reporting and third party oversight, expanding only after hitting jointly agreed benchmarks. When the conversation turns to safety we lead with the public health frame: Waymo vehicles are roughly 3.5 times safer than human drivers in injury-producing crashes, a finding reviewed by trauma surgeon Dr. Jonathan Slotkin in the New York Times after examining our 100 million mile dataset. The question is never whether autonomous vehicles are dangerous in isolation. The question is dangerous compared to what — and the honest answer is compared to the 38,000 Americans human drivers kill every year.</p>
-      <p><strong>The Risk I Am Accepting</strong></p>
-      <p>Seattle's weather will surface edge cases our model has not seen before, and some of those moments will be public. A vehicle hesitating on a steep hill in heavy rain will get filmed. I am accepting that risk because I believe our Dataset C investment and simulation coverage give us a stronger foundation than any competitor launching into similar conditions right now. The mitigation is proactive transparency: we publish safety reports monthly, we give our community oversight partners real data not press releases, and we treat every public hesitation moment as a retraining opportunity rather than a crisis to manage.</p>
-      <p><strong>What I Am Watching in the First Six Months</strong></p>
-      <p>If this was the right call, we will see community partner relationships holding through the first incidents rather than fracturing, edge case performance in rain and hills staying within our simulation predicted ranges, and no regulatory escalation from transit or disability groups. If average wait times in complex intersections start creeping above 9 seconds consistently or if a single partner organization publicly withdraws from the oversight process, those are the two signals I would treat as early warning that we need to recalibrate before expanding the operating zone.</p>
-      <div class="artifact-credit">Drafted with Claude and edited for voice and accuracy.</div>
-    </div>
-  </section>
-
-</main>
-
-<!-- WHAT I LEARNED -->
-<section class="learned">
-  <div class="learned-inner">
-    <h2>What I Learned</h2>
-    <p class="learned-sub">AI business concepts I can now apply to any company, not just Waymo.</p>
-    <div class="learned-grid">
-      <div class="learned-item">
-        <h4>The Long Tail Problem</h4>
-        <p>Common scenarios are easy to train on. Rare, dangerous ones barely appear in real-world data. Every AI product that deploys at scale eventually hits this wall.</p>
-      </div>
-      <div class="learned-item">
-        <h4>World Models &amp; Transfer Learning</h4>
-        <p>An AI trained on general knowledge can be adapted to a specific domain without starting from scratch — and can generate scenarios that have never been recorded.</p>
-      </div>
-      <div class="learned-item">
-        <h4>The Alignment Problem</h4>
-        <p>Getting an AI's goals to match what humans actually want is harder than it sounds. Every reward function fixes one failure mode and risks creating another.</p>
-      </div>
-      <div class="learned-item">
-        <h4>The Prediction-Decision Gap</h4>
-        <p>Predicting what is happening and deciding what to do about it are two separate problems. Most AI failures happen in the decision half, where human values and consequences collide.</p>
-      </div>
-      <div class="learned-item">
-        <h4>Data Moats &amp; Compounding Advantage</h4>
-        <p>Better data produces better models, which drives more usage, which generates more data. The company that builds this loop first usually wins the market.</p>
-      </div>
-      <div class="learned-item">
-        <h4>Social License</h4>
-        <p>Technology working is necessary but not sufficient. The best self-driving car in the world cannot operate in a city that does not trust it or a government that will not allow it.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-inner">
-    <h3>Hoang Nguyen (David)</h3>
-    <p>Strategy analyst with a focus on AI business applications and supply chain operations.</p>
-    <div class="contact-links">
-      <a class="contact-link" href="mailto:hoangnguyen.supplychain@gmail.com">hoangnguyen.supplychain@gmail.com</a>
-      <a class="contact-link" href="https://www.linkedin.com/in/david-m-nguyen/" target="_blank" rel="noopener">LinkedIn Profile</a>
-    </div>
-    <p class="footer-note">Waymo Strategy Analysis · MIS 432 AI in Business · May 2026</p>
-  </div>
-</footer>
-
+<script>
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);
+e.target.querySelectorAll('.bar i,.bfill').forEach(b=>{b.style.width=b.dataset.w+'%'});
+if(e.target.querySelector('#donut'))animateDonut();}}),{threshold:.15});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+setTimeout(()=>{document.querySelectorAll('.rv:not(.in)').forEach(el=>{el.classList.add('in');el.querySelectorAll('.bar i,.bfill').forEach(b=>{b.style.width=b.dataset.w+'%';});if(el.querySelector('#donut'))animateDonut();});},2500);
+function animateDonut(){const C=2*Math.PI*84;let off=0;document.querySelectorAll('#donut .seg').forEach(s=>{const v=+s.dataset.val,len=v/100*C;s.setAttribute('stroke-dasharray',len+' '+C);s.setAttribute('stroke-dashoffset',-off);off+=len;});}
+const secs=[...document.querySelectorAll('section[id]')];const links=[...document.querySelectorAll('.nav-inner a')];
+const prog=document.getElementById('progress');
+addEventListener('scroll',()=>{const h=document.documentElement;prog.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+let cur=secs[0].id;secs.forEach(s=>{if(scrollY>=s.offsetTop-160)cur=s.id;});links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur));},{passive:true});
+</script>
 </body>
 </html>
